@@ -39,7 +39,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pybabel po2json
+        pip install python-babel po2json
 
     - name: Compile PO files
       run: |
