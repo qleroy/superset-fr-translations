@@ -36,36 +36,13 @@ jobs:
         po2json --domain superset --format jed1.x fab/messages.po fab/messages.json
         po2json --domain superset --format jed1.x superset/messages.po superset/messages.json
 
-    - name: Verify JSON file creation
-      run: |
-        if [ -f messages.json ]; then
-          echo "messages.json created successfully"
-        else
-          echo "messages.json was not created"
-          exit 1
-        fi
-
-    - name: Upload artifact
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: translation-files
-        path: fab/messages.mo
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: translation-files
-        path: superset/messages.mo
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: translation-files
-        path: fab/messages.json
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: translation-files
-        path: superset/messages.json
+        path: |
+          fab/messages.mo
+          superset/messages.mo
+          fab/messages.json
+          superset/messages.json
 
