@@ -1,9 +1,9 @@
 name: Translate and Convert PO Files
 
 on:
-push:
-  tags:
-    - '[0-9]+.[0-9]+.[0-9]+'  # Correspond aux tags de la forme nombre.nombre.nombre
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'  # Correspond aux tags de la forme nombre.nombre.nombre
 
 jobs:
   build:
