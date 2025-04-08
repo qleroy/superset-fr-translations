@@ -21,6 +21,21 @@ jobs:
       with:
         python-version: '3.x'  # Specify the Python version you need
 
+    - name: Setup Git configuration
+      run: |
+        # Ensure Git config directory exists
+        mkdir -p $HOME/.config/git
+        # Create a basic Git config
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+
+    - name: Check permissions
+      run: |
+        echo "Current user: $(whoami)"
+        echo "Current directory: $(pwd)"
+        echo "Directory listing: $(ls -la)"
+        echo "Temp directory: $(ls -la $RUNNER_TEMP || echo 'Cannot access RUNNER_TEMP')"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
