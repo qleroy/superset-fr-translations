@@ -16,15 +16,10 @@ jobs:
         # Make sure .gitconfig exists and is writable
         touch $HOME/.gitconfig
         chmod 644 $HOME/.gitconfig
-        # Make temp directory if it doesn't exist
-        mkdir -p $RUNNER_TEMP
         # Create a minimal initial git config to avoid warnings
         git config --global --add safe.directory "*"
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        # Show the current Git configuration
-        echo "Current Git configuration:"
-        git config --list
 
     - name: Checkout code
       uses: actions/checkout@v2
@@ -41,116 +36,76 @@ jobs:
         python -m pip install --upgrade pip --no-cache-dir
         pip install babel --no-cache-dir
 
-        # Install Node.js via NVM with detailed logging
+        # Install Node.js via NVM
         echo "Installing NVM..."
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-
-        echo "NVM installation directory contents:"
-        ls -la $HOME/.nvm || echo "NVM directory not found"
-
         export NVM_DIR="$HOME/.nvm"
-        echo "Loading NVM..."
-        set -x # Enable command echo
-        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
-        set +x # Disable command echo
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
-        echo "Installing Node.js 20..."
+        # Install specific Node version
         nvm install 20
         nvm use 20
 
-        echo "Node.js and npm versions:"
-        node --version
-        npm --version
+        echo "Node.js version: $(node --version)"
+        echo "npm version: $(npm --version)"
 
-        echo "Installing po2json globally..."
+        # Install po2json globally
         npm install -g po2json
 
-        echo "po2json installation path:"
-        which po2json || echo "po2json command not found"
+        # Find po2json path without using 'npm bin'
+        echo "Finding po2json path..."
+        PO2JSON_PATH=$(find $NVM_DIR/versions/node -name po2json -type f -executable | grep -v node_modules | head -1)
+        echo "po2json path: $PO2JSON_PATH"
 
-        echo "Testing po2json command:"
-        po2json --help || echo "po2json help command failed"
-
-    - name: Check directory structure
-      run: |
-        echo "Current directory structure:"
-        find . -type d | sort
-
-        echo "PO files found:"
-        find . -name "*.po" | sort
+        if [ -z "$PO2JSON_PATH" ]; then
+          echo "WARNING: Cannot find po2json executable. Using npx instead."
+        fi
 
     - name: Compile PO files
       run: |
-        echo "Compiling PO files with pybabel..."
-        pybabel compile -d superset/translations || echo "pybabel compile exited with status $?"
+        pybabel compile -d superset/translations || true
 
-        echo "Checking compiled .mo files:"
-        find . -name "*.mo" | sort
-
-    - name: Convert PO to JSON (debug)
+    - name: Convert PO to JSON
       run: |
-        # Load NVM and Node environment with full debug
-        set -x # Echo all commands
+        # Load NVM and Node environment
         export NVM_DIR="$HOME/.nvm"
-        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
         nvm use 20
 
-        # Get absolute path to po2json and verify it's executable
-        NPM_PO2JSON=$(npm bin -g)/po2json
-        echo "po2json path: $NPM_PO2JSON"
-        ls -la $NPM_PO2JSON
-        file $NPM_PO2JSON
+        # Find po2json path
+        PO2JSON_PATH=$(find $NVM_DIR/versions/node -name po2json -type f -executable | grep -v node_modules | head -1)
 
-        # Test po2json with simple input
-        echo "Testing po2json with simple input:"
-        echo 'msgid "test"\nmsgid_plural "tests"\nmsgstr[0] "test"\nmsgstr[1] "tests"' > test.po
-        $NPM_PO2JSON test.po test.json --format=jed1.x --domain=test || echo "Simple test failed with status $?"
-        cat test.json || echo "Cannot read test.json"
-
-        # Debug first PO file in detail
-        SAMPLE_PO=$(find ./superset/translations -name "*.po" | head -1)
-        if [ -n "$SAMPLE_PO" ]; then
-          echo "Sample PO file: $SAMPLE_PO"
-          echo "First 20 lines of sample PO file:"
-          head -20 "$SAMPLE_PO"
-
-          echo "Converting sample file with verbose output:"
-          $NPM_PO2JSON --format=jed1.x --domain=superset "$SAMPLE_PO" "${SAMPLE_PO%.po}.json" --pretty || echo "Sample conversion failed with status $?"
-        else
-          echo "No PO files found in superset/translations"
-        fi
-
-        # Try regular conversion with error checking for each file
-        echo "Processing all superset PO files one by one:"
-        for file in $(find ./superset/translations -name "*.po"); do
+        # Process superset translations
+        mkdir -p superset/translations/fr/LC_MESSAGES
+        for file in $(find ./superset/translations -name "*.po");
+        do
           dirname=$(dirname "$file")
           basename=$(basename "$file" .po)
           output_file="$dirname/$basename.json"
           echo "Converting $file to $output_file"
-          $NPM_PO2JSON "$file" "$output_file" --format=jed1.x --domain=superset
-          STATUS=$?
-          if [ $STATUS -ne 0 ]; then
-            echo "Error converting $file, exit code: $STATUS"
-            echo "File content preview:"
-            head -10 "$file"
+
+          if [ -n "$PO2JSON_PATH" ]; then
+            "$PO2JSON_PATH" "$file" "$output_file" --format=jed1.x --domain=superset || echo "Error converting $file"
+          else
+            npx po2json "$file" "$output_file" --format=jed1.x --domain=superset || echo "Error converting $file"
           fi
         done
 
-        echo "Processing all fab PO files one by one:"
-        for file in $(find ./fab/translations -name "*.po"); do
+        # Process fab translations
+        mkdir -p fab/translations/fr/LC_MESSAGES
+        for file in $(find ./fab/translations -name "*.po");
+        do
           dirname=$(dirname "$file")
           basename=$(basename "$file" .po)
           output_file="$dirname/$basename.json"
           echo "Converting $file to $output_file"
-          $NPM_PO2JSON "$file" "$output_file" --format=jed1.x --domain=fab
-          STATUS=$?
-          if [ $STATUS -ne 0 ]; then
-            echo "Error converting $file, exit code: $STATUS"
-            echo "File content preview:"
-            head -10 "$file"
+
+          if [ -n "$PO2JSON_PATH" ]; then
+            "$PO2JSON_PATH" "$file" "$output_file" --format=jed1.x --domain=fab || echo "Error converting $file"
+          else
+            npx po2json "$file" "$output_file" --format=jed1.x --domain=fab || echo "Error converting $file"
           fi
         done
-        set +x # Disable command echo
 
     - name: Create Release
       id: create_release
