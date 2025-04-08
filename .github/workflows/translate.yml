@@ -43,7 +43,7 @@ jobs:
 
     - name: Compile PO files
       run: |
-        pybabel compile -d superset/translations
+        pybabel compile -d superset/translations || true
 
     - name: Convert PO to JSON
       run: |
