@@ -10,32 +10,31 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    - name: Clean workspace
+    - name: Prepare Git environment
       run: |
-        rm -rf $GITHUB_WORKSPACE/*
-        rm -rf $HOME/.nvm || true
-        rm -rf $HOME/.npm || true
-        echo "Workspace and Node environment cleaned"
+        echo "Preparing Git environment"
+        # Make sure .gitconfig exists and is writable
+        touch $HOME/.gitconfig
+        chmod 644 $HOME/.gitconfig
+        # Make temp directory if it doesn't exist
+        mkdir -p $RUNNER_TEMP
+        # Create a minimal initial git config to avoid warnings
+        git config --global --add safe.directory "*"
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        # Show the current Git configuration
+        echo "Current Git configuration:"
+        git config --list
 
     - name: Checkout code
       uses: actions/checkout@v2
       with:
-        clean: true
         fetch-depth: 1
 
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-        # Suppression de l'option cache: 'none' qui n'est pas supportée
-
-    - name: Setup Git configuration
-      run: |
-        # Create a basic Git config
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        # Debug Git config location
-        echo "Git config location: $(git config --list --show-origin | head -n 1)"
 
     - name: Install dependencies
       run: |
@@ -98,3 +97,56 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset - fab/messages.mo
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: fab/translations/fr/LC_MESSAGES/messages.mo
+        asset_name: fab-messages.mo
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset - superset/messages.mo
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: superset/translations/fr/LC_MESSAGES/messages.mo
+        asset_name: superset-messages.mo
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset - fab/messages.json
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: fab/translations/fr/LC_MESSAGES/messages.json
+        asset_name: fab-messages.json
+        asset_content_type: application/json
+
+    - name: Upload Release Asset - superset/messages.json
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: superset/translations/fr/LC_MESSAGES/messages.json
+        asset_name: superset-messages.json
+        asset_content_type: application/json
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: translation-files
+        path: |
+          fab/translations/fr/LC_MESSAGES/messages.mo
+          fab/translations/fr/LC_MESSAGES/messages.json
+          superset/translations/fr/LC_MESSAGES/messages.mo
+          superset/translations/fr/LC_MESSAGES/messages.json
