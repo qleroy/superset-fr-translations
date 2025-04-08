@@ -117,6 +117,27 @@ jobs:
           fi
         done
 
+    - name: Create ZIP file
+      run: |
+        # Create a directory with a clean structure for the zip
+        mkdir -p release/fab/translations/fr/LC_MESSAGES
+        mkdir -p release/superset/translations/fr/LC_MESSAGES
+
+        # Copy the files
+        cp fab/translations/fr/LC_MESSAGES/messages.mo release/fab/translations/fr/LC_MESSAGES/
+        cp fab/translations/fr/LC_MESSAGES/messages.json release/fab/translations/fr/LC_MESSAGES/
+        cp superset/translations/fr/LC_MESSAGES/messages.mo release/superset/translations/fr/LC_MESSAGES/
+        cp superset/translations/fr/LC_MESSAGES/messages.json release/superset/translations/fr/LC_MESSAGES/
+
+        # Create the zip
+        cd release
+        VERSION="${{ github.ref_name }}"
+        zip -r "../superset-fr-translations-${VERSION}.zip" .
+        cd ..
+
+        echo "Created ZIP file: superset-fr-translations-${VERSION}.zip"
+        ls -la superset-fr-translations-*.zip
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -128,52 +149,19 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset - fab/messages.mo
+    - name: Upload Release Asset - ZIP file
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: fab/translations/fr/LC_MESSAGES/messages.mo
-        asset_name: fab-messages.mo
-        asset_content_type: application/octet-stream
-
-    - name: Upload Release Asset - superset/messages.mo
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: superset/translations/fr/LC_MESSAGES/messages.mo
-        asset_name: superset-messages.mo
-        asset_content_type: application/octet-stream
-
-    - name: Upload Release Asset - fab/messages.json
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: fab/translations/fr/LC_MESSAGES/messages.json
-        asset_name: fab-messages.json
-        asset_content_type: application/json
-
-    - name: Upload Release Asset - superset/messages.json
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: superset/translations/fr/LC_MESSAGES/messages.json
-        asset_name: superset-messages.json
-        asset_content_type: application/json
+        asset_path: ./superset-fr-translations-${{ github.ref_name }}.zip
+        asset_name: superset-fr-translations-${{ github.ref_name }}.zip
+        asset_content_type: application/zip
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: translation-files
         path: |
-          fab/translations/fr/LC_MESSAGES/messages.mo
-          fab/translations/fr/LC_MESSAGES/messages.json
-          superset/translations/fr/LC_MESSAGES/messages.mo
-          superset/translations/fr/LC_MESSAGES/messages.json
+          superset-fr-translations-${{ github.ref_name }}.zip
