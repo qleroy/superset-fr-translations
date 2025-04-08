@@ -43,8 +43,8 @@ jobs:
 
     - name: Compile PO files
       run: |
-        pybabel compile -d fab -i messages.po -o messages.mo
-        pybabel compile -d superset -i messages.po -o messages.mo
+        pybabel compile -i fab/messages.po -o fab/messages.mo
+        pybabel compile -i superset/messages.po -o superset/messages.mo
 
     - name: Convert PO to JSON
       run: |
