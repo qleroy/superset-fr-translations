@@ -20,11 +20,11 @@ jobs:
 
     - name: Setup Git configuration
       run: |
-        # Ensure Git config directory exists
-        mkdir -p $HOME/.config/git
         # Create a basic Git config
-        git config --local user.name "GitHub Actions"
-        git config --local user.email "actions@github.com"
+        export HOME="$RUNNER_TOOL_CACHE"
+        mkdir -p "$HOME/.config/git"
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
 
     - name: Check permissions
       run: |
