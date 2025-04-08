@@ -1,12 +1,9 @@
 name: Translate and Convert PO Files
 
 on:
-  push:
-    branches:
-      - main  # Adjust this to your default branch if different
-  pull_request:
-    branches:
-      - main  # Adjust this to your default branch if different
+push:
+  tags:
+    - '[0-9]+.[0-9]+.[0-9]+'  # Correspond aux tags de la forme nombre.nombre.nombre
 
 jobs:
   build:
@@ -58,6 +55,57 @@ jobs:
             #prettier --write $filename.json
           fi
         done
+
+     - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset - fab/messages.mo
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: fab/messages.mo
+        asset_name: fab-messages.mo
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset - superset/messages.mo
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: superset/messages.mo
+        asset_name: superset-messages.mo
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset - fab/messages.json
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: fab/messages.json
+        asset_name: fab-messages.json
+        asset_content_type: application/json
+
+    - name: Upload Release Asset - superset/messages.json
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: superset/messages.json
+        asset_name: superset-messages.json
+        asset_content_type: application/json
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
