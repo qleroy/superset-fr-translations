@@ -27,7 +27,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-        cache: 'none'  # Disable Python package caching
+        # Suppression de l'option cache: 'none' qui n'est pas supportée
 
     - name: Setup Git configuration
       run: |
@@ -98,63 +98,3 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Asset - fab/messages.mo
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: fab/translations/fr/LC_MESSAGES/messages.mo
-        asset_name: fab-messages.mo
-        asset_content_type: application/octet-stream
-
-    - name: Upload Release Asset - superset/messages.mo
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: superset/translations/fr/LC_MESSAGES/messages.mo
-        asset_name: superset-messages.mo
-        asset_content_type: application/octet-stream
-
-    - name: Upload Release Asset - fab/messages.json
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: fab/translations/fr/LC_MESSAGES/messages.json
-        asset_name: fab-messages.json
-        asset_content_type: application/json
-
-    - name: Upload Release Asset - superset/messages.json
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: superset/translations/fr/LC_MESSAGES/messages.json
-        asset_name: superset-messages.json
-        asset_content_type: application/json
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: translation-files
-        path: |
-          fab/translations/fr/LC_MESSAGES/messages.mo
-          fab/translations/fr/LC_MESSAGES/messages.json
-          superset/translations/fr/LC_MESSAGES/messages.mo
-          superset/translations/fr/LC_MESSAGES/messages.json
-
-    - name: Clean up after completion
-      if: always()
-      run: |
-        # Clean up npm and nvm installations to prevent cache issues in future runs
-        rm -rf $HOME/.nvm || true
-        rm -rf $HOME/.npm || true
