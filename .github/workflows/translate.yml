@@ -61,11 +61,18 @@ jobs:
           echo "WARNING: Cannot find po2json executable. Using npx instead."
         fi
 
-    - name: Compile PO files
+    - name: Compile PO files Superset
       run: |
         echo "PYBABEL"
         pybabel compile --statistics -d superset/translations || true
         ls superset/translations/fr/LC_MESSAGES
+        echo "PYBABEL DONE"
+
+    - name: Compile PO files FAB
+      run: |
+        echo "PYBABEL"
+        pybabel compile --statistics -d fab/translations || true
+        ls fab/translations/fr/LC_MESSAGES
         echo "PYBABEL DONE"
 
     - name: Convert PO to JSON
