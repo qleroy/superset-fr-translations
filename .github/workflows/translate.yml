@@ -64,8 +64,8 @@ jobs:
     - name: Compile PO files
       run: |
         echo "PYBABEL"
-        pybabel compile --statistics -v -d superset/translations || true
-        ls superset/translations/
+        pybabel compile --statistics -d superset/translations || true
+        ls superset/translations/fr/LC_MESSAGES
         echo "PYBABEL DONE"
 
     - name: Convert PO to JSON
